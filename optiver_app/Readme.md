@@ -20,7 +20,7 @@ docker build -f dockerfiles/Dockerfile.app -t optiver-db-app .
 
 To run the Optiver DB APP 
 ```bash
-docker run -d --env-file /home/ayush1/optiver_app/.env -p 80:8000 optiver-db-app
+docker run -d --env-file $(pwd)/.env -p 80:8000 optiver-db-app
 ```
 
 ## SETTING UP REVERSE PROXY USING NGINX

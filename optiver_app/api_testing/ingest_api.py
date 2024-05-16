@@ -19,13 +19,13 @@ data = {
         "wap": 100.0, 
         "target": 120.0, 
         "time_id": 1, 
-        "train_type": "dev",
+        "train_type": "dev", # prod -> actual 
         "row_id" : "483_0_10"
     }],
     "commit" : True 
     }
 
-url = "http://localhost:8000/ingest/"
+url = "http://localhost:80/ingest/"
 
 # Convert the dictionary to JSON format
 json_data = json.dumps(data)

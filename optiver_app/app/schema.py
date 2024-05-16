@@ -7,9 +7,10 @@ import logging
 import logging.config
 from sqlalchemy import Column, Integer, Float, String, Date, ForeignKey, JSON, Boolean
 from sqlalchemy.orm import relationship, backref
-from base import Base
+from app.base import Base
 
-logging.config.fileConfig('configs/logging/local.ini', disable_existing_loggers=False)
+
+logging.config.fileConfig('app/configs/logging/local.ini', disable_existing_loggers=False)
 logger = logging.getLogger('optiver.'+__name__)
 
 class StockData(Base):
@@ -60,6 +61,9 @@ class Model(Base):
     model_id = Column(Integer, primary_key=True)
     model_name = Column(String(255), nullable=False)
     model_artifact_path = Column(String(255), nullable=False)
+    date_id = Column(Integer,  ForeignKey('date_mapping.date_id'), nullable=False)
+    date_mapping = relationship("DateMapping", backref=backref("Model", cascade="all, delete-orphan"))
+
 
 class ModelInference(Base):
     __tablename__ = "model_inference"
