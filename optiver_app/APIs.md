@@ -53,7 +53,7 @@ GET /date_mappings/?page=1&page_size=10
 
 ## 2. Ingest Data
 ### Endpoint
-`POST /ingest/`
+`POST /stock_data/`
 
 ### Description
 Ingests stock data into the database.
@@ -266,7 +266,7 @@ GET /models/?page=1&page_size=10
 
 ## 7. Get Stock Data
 ### Endpoint
-`GET /get_stock_data/`
+`GET /stock_data/`
 
 ### Description
 Fetches stock data based on date ID or date range.
