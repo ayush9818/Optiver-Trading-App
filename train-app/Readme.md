@@ -5,7 +5,7 @@ docker build -f dockerfiles/Dockerfile.train -t optiver-train-app .
 
 To run the Optiver DB APP 
 ```bash
-docker run -d --env-file $(pwd)/.env -p 81:8001 optiver-train-app
+docker run -d --env-file $(pwd)/.env -p 81:8001 --name train-app optiver-train-app
 ```
 
 

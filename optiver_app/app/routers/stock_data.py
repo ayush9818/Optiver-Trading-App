@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import StockDataQueryParams, PageRequest
+from app.models import StockDataQueryParams, PageRequest, IngestRequest
 from app.schema import StockData
 from app.utils import clean_nan_values
+from app.crud import get_or_create_date
 
 router = APIRouter()
 
-@router.get("/get_stock_data/", response_model=PageRequest)
+@router.get("/stock_data/", response_model=PageRequest)
 def get_stock_data(query_params: StockDataQueryParams = Depends(),
                    db: Session = Depends(get_db),
                    page: int = Query(1, description="Page number"),
@@ -34,3 +35,17 @@ def get_stock_data(query_params: StockDataQueryParams = Depends(),
         "page_size": page_size,
         "data": cleaned_results
     }
+
+
+@router.post("/stock_data/")
+async def ingest_data(request: IngestRequest, db: Session = Depends(get_db)):
+    try:
+        for item in request.data:
+            date_mapping = get_or_create_date(db, item.date_id)
+            db.add(StockData(**item.dict(), date_mapping=date_mapping))
+        if request.commit:
+            db.commit()
+        return {"message": "Data ingested successfully."}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))

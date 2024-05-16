@@ -13,7 +13,7 @@ async def create_model(model: ModelCreate, db: Session = Depends(get_db)):
     existing_model = db.query(Model).filter(Model.model_name == model.model_name).first()
     if existing_model:
         raise HTTPException(status_code=400, detail="Model already exists")
-    new_model = Model(model_name=model.model_name, model_artifact_path=model.model_artifact_path)
+    new_model = Model(model_name=model.model_name, model_artifact_path=model.model_artifact_path, date_id=model.date_id)
     db.add(new_model)
     try:
         db.commit()
