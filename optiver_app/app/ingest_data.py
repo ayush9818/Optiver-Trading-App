@@ -4,10 +4,10 @@ import pandas as pd
 from database import SessionLocal
 import logging
 import logging.config
-from schema import StockData, DateMapping
-from utils import get_date_from_date_id
+from app.schema import StockData, DateMapping
+from app.utils import get_date_from_date_id
 
-logging.config.fileConfig('configs/logging/local.ini', disable_existing_loggers=False)
+logging.config.fileConfig('app/configs/logging/local.ini', disable_existing_loggers=False)
 logger = logging.getLogger('optiver.'+__name__)
 
 

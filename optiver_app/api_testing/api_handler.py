@@ -34,7 +34,7 @@ class APIHandler:
         # Make a POST request to the API endpoint
         response = requests.post(url, data=json_data, headers=headers)
         # Check the response from the server
-        if response.status_code == 200:
+        if response.ok:
             print("Data ingested successfully")
         else:
             print(f"Failed to ingest data: {response.status_code} - {response.text}")
