@@ -21,10 +21,13 @@ load_dotenv()
 
 def get_model(model_id, artifact_dir):
     base_url = os.getenv('BASE_API')
-    model_api = os.getenv('MODEL_API') + f'{model_id}'
+    model_api = os.getenv('MODEL_API')
+    params = {
+        'model_id' : model_id
+    }
 
     api_handler = APIHandler(base_url=base_url)
-    data = api_handler.get(model_api, {})[0]
+    data = api_handler.get(model_api, params)[0]
 
     model_artifact_path = data['model_artifact_path']
 
@@ -114,7 +117,7 @@ def incremental_training(data_path, base_model_path, artifact_dir, model_name):
         dtest = xgb.DMatrix(X_test_cv, label=y_test_cv)
         params = {'objective': 'reg:squarederror', 'eval_metric': 'mae', 'learning_rate': 0.01}
         model_xgb = xgb.train(params, dtrain, num_boost_round=50, evals=[(dtest, 'eval')],
-                              early_stopping_rounds=30, verbose_eval=False)
+                              early_stopping_rounds=30, verbose_eval=False, xgb_model=initial_model)
         xgboost_models.append(model_xgb)
         xgboost_cv_errors.append(model_xgb.best_score)
 
@@ -155,7 +158,7 @@ def run_inference(model_path, data_path, artifact_dir, request: InferenceRequest
     s3_client.upload_file(artifact_dir / inference_filename, s3_path)
     return s3_path
 
-def ingest_model(model_name, model_artifact_path):
+def ingest_model(model_name, date_id, model_artifact_path):
     try:
         base_api = os.getenv('BASE_API')
         model_api = os.getenv('MODEL_API')
@@ -165,7 +168,8 @@ def ingest_model(model_name, model_artifact_path):
         api_handler = APIHandler(base_api)
         data = {
             "model_name": model_name,
-            "model_artifact_path": model_artifact_path
+            "model_artifact_path": model_artifact_path,
+            "date_id" : date_id 
         }
         api_handler.post(model_api, data)
     except Exception as e:
@@ -204,7 +208,7 @@ async def train_model(request: TrainRequest):
     uploaded_path = incremental_training(train_data_path, base_model_path, artifact_dir, request.model_name)
     logger.info("Model Uploaded to %s", uploaded_path)
 
-    ingest_model(request.model_name, uploaded_path)
+    ingest_model(request.model_name, request.date_id, uploaded_path)
     logger.info("Model Ingest Successfully")
 
     logger.info(f"Congratulations!! Training completed for model {request.model_name}")
@@ -228,10 +232,11 @@ async def inference_model(request: InferenceRequest):
     predictions_path = run_inference(model_path, inference_data_path, artifact_dir, request)
     logger.info("Predictions Uploaded to %s", predictions_path)
 
-    ingest_inference(request.date_id, request.model_id, predictions_path)
+    ingest_inference(request.pred_date_id, request.model_id, predictions_path)
     logger.info("Inference Ingestion Success!!")
 
     try:
         shutil.rmtree(artifact_dir)
     except Exception as e:
         logger.error("Error cleaning up artifacts: %s", str(e))
+

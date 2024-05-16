@@ -61,11 +61,13 @@ class StockDataQueryParams(BaseModel):
 class ModelCreate(BaseModel):
     model_name: str
     model_artifact_path: str
+    date_id : int 
 
 class ModelDisplay(BaseModel):
     model_id: int
     model_name: str
     model_artifact_path: str
+    date_id : int 
 
     class Config:
         orm_mode = True

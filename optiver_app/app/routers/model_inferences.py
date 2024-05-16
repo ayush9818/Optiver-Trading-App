@@ -4,6 +4,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from app.database import get_db
 from app.models import ModelInferenceCreate, PageModelInference, ModelInferenceRead
 from app.schema import ModelInference
+from typing import Optional
 
 router = APIRouter()
 
@@ -26,21 +27,30 @@ def create_model_inference(model_inference: ModelInferenceCreate, db: Session = 
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/model-inferences/", response_model=PageModelInference)
-def read_model_inferences(model_id: int, date_id: int, 
-                          db: Session = Depends(get_db),
-                          page: int = Query(1, description="Page number"), 
-                          page_size: int = Query(10, description="Number of results per page")):
-    query = db.query(ModelInference).filter(
-        ModelInference.model_id == model_id, 
-        ModelInference.date_id == date_id
-    )
+def read_model_inferences(
+    model_id: Optional[int] = Query(None, description="Model ID"),
+    date_id: Optional[int] = Query(None, description="Date ID"),
+    db: Session = Depends(get_db),
+    page: int = Query(1, description="Page number"),
+    page_size: int = Query(10, description="Number of results per page")
+):
+    query = db.query(ModelInference)
+    
+    if model_id is not None:
+        query = query.filter(ModelInference.model_id == model_id)
+    if date_id is not None:
+        query = query.filter(ModelInference.date_id == date_id)
+
     total_results = query.count()
     offset = (page - 1) * page_size
     query = query.offset(offset).limit(page_size)
     results = query.all()
+
     if not results:
-        raise HTTPException(status_code=404, detail="Model inference not found.")
+        raise HTTPException(status_code=404, detail="No model inferences found.")
+
     total_pages = (total_results + page_size - 1) // page_size
+
     return {
         "total_results": total_results,
         "total_pages": total_pages,
@@ -48,3 +58,4 @@ def read_model_inferences(model_id: int, date_id: int,
         "page_size": page_size,
         "data": results
     }
+
