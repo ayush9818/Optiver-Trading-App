@@ -31,7 +31,7 @@ class APIHandler:
         json_data = json.dumps(data)
         headers = {'Content-Type': 'application/json'}
         response = requests.post(url, data=json_data, headers=headers)
-        if response.status_code == 200:
+        if response.ok:
             logger.info("Success")
         else:
             logger.error(f"Failed to ingest data: {response.status_code} - {response.text}")
