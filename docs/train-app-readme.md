@@ -8,10 +8,6 @@ To run the Optiver DB APP
 docker run -d --env-file $(pwd)/.env -p 81:8001 --name train-app optiver-train-app
 ```
 
-
-
-
-
 ## FIREWALL CONFIGURATIONS TO EXPOSE PORT ON EC2 FOR APPLICATION
 
 Allow traffic on a specific port:

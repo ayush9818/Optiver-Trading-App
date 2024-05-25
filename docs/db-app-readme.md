@@ -23,7 +23,6 @@ To run the Optiver DB APP
 docker run -d --env-file $(pwd)/.env -p 80:8000 optiver-db-app
 ```
 
-
 ## SETTING UP REVERSE PROXY USING NGINX
 
 Install Nginx
