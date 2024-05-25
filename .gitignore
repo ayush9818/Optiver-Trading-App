@@ -39,6 +39,9 @@ MANIFEST
 *.manifest
 *.spec
 
+optiver_app/.env
+train_app/.env
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
