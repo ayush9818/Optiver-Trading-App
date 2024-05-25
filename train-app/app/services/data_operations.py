@@ -14,27 +14,46 @@ from app.services.s3_handler import S3Handler
 from app.models import TrainRequest, InferenceRequest
 from dotenv import load_dotenv
 
+# Configure logger
 logging.config.fileConfig('app/configs/logging/local.ini', disable_existing_loggers=False)
 logger = logging.getLogger('optiver.' + __name__)
 
+# Load environment variables
 load_dotenv()
 
 def get_model(model_id, artifact_dir):
+    """
+    Retrieve the base model from the S3 bucket.
+
+    Args:
+        model_id (int): ID of the model to retrieve.
+        artifact_dir (Path): Directory to save the downloaded model artifact.
+
+    Returns:
+        Path: Path to the downloaded model artifact.
+    """
     base_url = os.getenv('BASE_API')
     model_api = os.getenv('MODEL_API')
-    params = {
-        'model_id' : model_id
-    }
+    params = {'model_id': model_id}
 
     api_handler = APIHandler(base_url=base_url)
     data = api_handler.get(model_api, params)[0]
 
     model_artifact_path = data['model_artifact_path']
-
     base_model_path = S3Handler().download_file(model_artifact_path, artifact_dir)
     return base_model_path
 
 def fetch_train_data(data_params, artifact_dir):
+    """
+    Fetch training data based on the provided parameters.
+
+    Args:
+        data_params (TrainRequest): Parameters for fetching the training data.
+        artifact_dir (Path): Directory to save the fetched training data.
+
+    Returns:
+        Path: Path to the saved training data CSV file.
+    """
     params = {
         'start_date_id': data_params.start_date_id,
         'end_date_id': data_params.end_date_id,
@@ -50,19 +69,26 @@ def fetch_train_data(data_params, artifact_dir):
     data = data[data.train_type == 'prod']
     data.drop('train_type', axis=1, inplace=True)
 
-    data.to_csv(artifact_dir / 'train_data.csv', index=False)
-    return artifact_dir / 'train_data.csv'
+    data_path = artifact_dir / 'train_data.csv'
+    data.to_csv(data_path, index=False)
+    return data_path
 
 def fetch_inference_data(data_params, artifact_dir):
+    """
+    Fetch inference data based on the provided parameters.
+
+    Args:
+        data_params (InferenceRequest): Parameters for fetching the inference data.
+        artifact_dir (Path): Directory to save the fetched inference data.
+
+    Returns:
+        Path: Path to the saved inference data CSV file.
+    """
     assert data_params.pred_date_id > 1
     logger.info(f"Prediction Date ID: {data_params.pred_date_id}")
     logger.info(f"Fetching Data for {data_params.pred_date_id - 1} DateID")
 
-    params = {
-        'start_date_id': None,
-        'end_date_id': None,
-        'date_id': data_params.pred_date_id - 1
-    }
+    params = {'date_id': data_params.pred_date_id - 1}
 
     base_api = os.getenv('BASE_API')
     data_api = os.getenv('DATA_API')
@@ -73,10 +99,20 @@ def fetch_inference_data(data_params, artifact_dir):
     data = data[data.train_type == 'prod']
     data.drop('train_type', axis=1, inplace=True)
 
-    data.to_csv(artifact_dir / 'inference_data.csv', index=False)
-    return artifact_dir / 'inference_data.csv'
+    data_path = artifact_dir / 'inference_data.csv'
+    data.to_csv(data_path, index=False)
+    return data_path
 
 def generate_features(df):
+    """
+    Generate additional features for the dataset.
+
+    Args:
+        df (pd.DataFrame): Dataframe containing the original data.
+
+    Returns:
+        tuple: Updated dataframe with additional features and the list of feature names.
+    """
     features = ['seconds_in_bucket', 'imbalance_buy_sell_flag', 'imbalance_size', 'matched_size',
                 'bid_size', 'ask_size', 'reference_price', 'far_price', 'near_price', 'ask_price',
                 'bid_price', 'wap', 'imb_s1', 'imb_s2']
@@ -94,14 +130,24 @@ def generate_features(df):
     return df, features
 
 def incremental_training(data_path, base_model_path, artifact_dir, model_name):
-    df_train = pd.read_csv(data_path)
+    """
+    Perform incremental training on the provided data.
 
+    Args:
+        data_path (Path): Path to the training data CSV file.
+        base_model_path (Path): Path to the base model artifact.
+        artifact_dir (Path): Directory to save the trained model.
+        model_name (str): Name of the model.
+
+    Returns:
+        str: Path to the uploaded model artifact in the S3 bucket.
+    """
+    df_train = pd.read_csv(data_path)
     initial_model = pickle.load(open(base_model_path, 'rb'))
 
     df_train = df_train.dropna(subset=['target']).copy()
     df_train, feature_names = generate_features(df_train)
 
-    feature_names = df_train.drop(columns=['target', 'date_id', 'stock_id']).columns.tolist()
     X = df_train[feature_names].values
     y = df_train['target'].values
 
@@ -134,14 +180,24 @@ def incremental_training(data_path, base_model_path, artifact_dir, model_name):
     return s3_path
 
 def run_inference(model_path, data_path, artifact_dir, request: InferenceRequest):
+    """
+    Run inference using the provided model and data.
+
+    Args:
+        model_path (Path): Path to the model artifact.
+        data_path (Path): Path to the inference data CSV file.
+        artifact_dir (Path): Directory to save the inference results.
+        request (InferenceRequest): The inference request data.
+
+    Returns:
+        str: Path to the uploaded inference results in the S3 bucket.
+    """
     with open(model_path, 'rb') as f:
         model = pickle.load(f)
     
     infer_df = pd.read_csv(data_path)
     infer_df = infer_df.dropna(subset=['target']).copy()
     infer_df, feature_names = generate_features(infer_df)
-
-    feature_names = infer_df.drop(columns=['target', 'date_id', 'stock_id']).columns.tolist()
 
     X_inference = infer_df[feature_names].values
 
@@ -159,6 +215,14 @@ def run_inference(model_path, data_path, artifact_dir, request: InferenceRequest
     return s3_path
 
 def ingest_model(model_name, date_id, model_artifact_path):
+    """
+    Ingest the trained model information into the database.
+
+    Args:
+        model_name (str): Name of the model.
+        date_id (int): ID of the date the model was trained.
+        model_artifact_path (str): Path to the model artifact in the S3 bucket.
+    """
     try:
         base_api = os.getenv('BASE_API')
         model_api = os.getenv('MODEL_API')
@@ -169,7 +233,7 @@ def ingest_model(model_name, date_id, model_artifact_path):
         data = {
             "model_name": model_name,
             "model_artifact_path": model_artifact_path,
-            "date_id" : date_id 
+            "date_id": date_id
         }
         api_handler.post(model_api, data)
     except Exception as e:
@@ -177,6 +241,14 @@ def ingest_model(model_name, date_id, model_artifact_path):
         raise
 
 def ingest_inference(date_id, model_id, prediction_path):
+    """
+    Ingest the inference results into the database.
+
+    Args:
+        date_id (int): ID of the date the inference was made.
+        model_id (int): ID of the model used for inference.
+        prediction_path (str): Path to the inference results in the S3 bucket.
+    """
     try:
         base_api = os.getenv('BASE_API')
         inference_api = os.getenv('INFERENCE_API')
@@ -195,6 +267,12 @@ def ingest_inference(date_id, model_id, prediction_path):
         raise
 
 async def train_model(request: TrainRequest):
+    """
+    Perform the training process for the specified model.
+
+    Args:
+        request (TrainRequest): The training request data.
+    """
     artifact_dir = Path(os.getcwd()) / f'artifacts/{int(time())}'
     os.makedirs(artifact_dir, exist_ok=True)
     logger.info("Setting Artifact Directory to artifact dir")
@@ -219,6 +297,12 @@ async def train_model(request: TrainRequest):
         logger.error("Error cleaning up artifacts: %s", str(e))
 
 async def inference_model(request: InferenceRequest):
+    """
+    Perform the inference process for the specified model.
+
+    Args:
+        request (InferenceRequest): The inference request data.
+    """
     artifact_dir = Path(os.getcwd()) / f'artifacts/{int(time())}'
     os.makedirs(artifact_dir, exist_ok=True)
     logger.info("Setting Artifact Directory to artifact dir")
@@ -239,4 +323,3 @@ async def inference_model(request: InferenceRequest):
         shutil.rmtree(artifact_dir)
     except Exception as e:
         logger.error("Error cleaning up artifacts: %s", str(e))
-
