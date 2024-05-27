@@ -1,6 +1,6 @@
 optiver_app/data/*.csv
 env_files/
-
+data/
 # Created by https://www.toptal.com/developers/gitignore/api/python
 # Edit at https://www.toptal.com/developers/gitignore?templates=python
 

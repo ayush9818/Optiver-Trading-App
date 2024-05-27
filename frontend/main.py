@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings('ignore')
+
 import requests
 import os 
 from handlers.api_handler import APIHandler
@@ -10,28 +13,27 @@ from dotenv import load_dotenv
 from utils import get_holidays, convert_to_meaningful_time, get_date_from_date_id
 import matplotlib.pyplot as plt
 import pandas as pd
+import matplotlib.dates as mdates
 
 # Load environment variables from .env file
 load_dotenv()
+# Function to inject CSS
+def inject_css(file_path):
+    with open(file_path) as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
-# Layout settings
-st.set_page_config(layout="wide")
-# Custom CSS for 80% width content
-st.markdown(
-    """
-    <style>
-    .main .block-container {
-        max-width: 80%;
-        margin: auto;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# Inject your custom CSS
+inject_css("style.css")
 
-st.title('Stock Analysis Dashboard')
+# Your Streamlit app code
+st.title("Stock Analysis Dashboard")
 
-st.image('images/app_frontend.jpg', caption='Stock Analysis', width=500)
+
+# Create three columns with different widths
+col1, col2, col3 = st.columns([1, 3, 1])
+
+with col2:
+    st.image("images/app_frontend.jpg", caption="Stock Analysis")
 
 if __name__ == "__main__":
     # Create artifacts directory to keep model files
@@ -39,12 +41,8 @@ if __name__ == "__main__":
     artifact_dir.mkdir(exist_ok=True)
 
     # Retrieve the base URL from environment variables
-    BASE_API_URL = os.getenv('BASE_API_URL')
-    GET_API_PORT = os.getenv('GET_API_PORT')
-    POST_API_PORT = os.getenv('POST_API_PORT')
-
-    BASE_GET_API = f"{BASE_API_URL}:{GET_API_PORT}"
-    BASE_POST_API = f"{BASE_API_URL}:{POST_API_PORT}"
+    BASE_GET_API = os.getenv('BASE_GET_API')
+    BASE_POST_API = os.getenv('BASE_POST_API')
     
     # Initialize API handler in session state
     if 'api_handler' not in st.session_state:
@@ -100,9 +98,10 @@ if __name__ == "__main__":
         st.write(f"Last Model ID: {st.session_state['last_model_id']}")
         st.write(f"Last Model Name: {st.session_state['last_model_name']}")
 
-        st.write("All Models:", st.session_state['all_models'])
-        if st.session_state['last_fetch_time'] is not None:
-            st.write(f"Last Fetch Time: {st.session_state['last_fetch_time'].strftime('%Y-%m-%d %H:%M:%S')}")
+        # TEST
+        # st.write("All Models:", st.session_state['all_models'])
+        # if st.session_state['last_fetch_time'] is not None:
+        #     st.write(f"Last Fetch Time: {st.session_state['last_fetch_time'].strftime('%Y-%m-%d %H:%M:%S')}")
     else:
         st.write("No models fetched yet. Click 'Fetch Last Model ID' to fetch models.")
 
@@ -116,7 +115,7 @@ if __name__ == "__main__":
         # Calculate the training date ID
         train_date_id = min(st.session_state['last_date_id'] + 1, max_date_id)
 
-        # # Display the date ID input (disabled)
+        # Display the date ID input (disabled)
         # st.markdown(f"Date ID (range from 1-{max_date_id})")
         # train_date_id_input = st.text_input("", train_date_id, key="train_date_id", disabled=True, label_visibility="collapsed")
 
@@ -156,7 +155,7 @@ if __name__ == "__main__":
     with model_inferences_tab:
         # Calculate the prediction date ID
         prediction_date_id = min(st.session_state['last_date_id'] + 1, max_date_id + 1)
-        # # Display the prediction date ID input (disabled)
+        # Display the prediction date ID input (disabled)
         # st.markdown(f"Prediction Date ID (range from 1-{max_date_id})")
         # prediction_date_id_input = st.text_input(
         #     "", 
@@ -253,17 +252,25 @@ if __name__ == "__main__":
                                 if 'prediction' in inference_data_filtered.columns and 'target' in inference_data_filtered.columns:
                                     col1, col2, col3 = st.columns([1, 2, 1])  # Create columns to control layout
                                     with col1:  # Place chart in the middle column
-                                        # Plot predictions vs. target using seconds_in_bucket as x-axis
-                                        plt.figure(figsize=(4, 2)) 
-                                        plt.plot(inference_data_filtered['seconds_in_bucket'], inference_data_filtered['prediction'], label='Prediction', marker='o')
-                                        plt.plot(inference_data_filtered['seconds_in_bucket'], inference_data_filtered['target'], label='Target', marker='x')
-                                        plt.xlabel('Seconds in Bucket')
-                                        plt.ylabel('Value')
+                                        # Create a figure and axis with a specific size
+                                        fig, ax = plt.subplots(figsize=(10, 6))
+                                        
+                                        # Plotting the predicted and actual prices
+                                        ax.plot(inference_data_filtered['seconds_in_bucket'], inference_data_filtered['prediction'], label='Prediction', linestyle='-', color='royalblue')
+                                        ax.plot(inference_data_filtered['seconds_in_bucket'], inference_data_filtered['target'], label='Target', linestyle='--', color='darkorange')
+                                        
+                                        # Setting labels, legend, and title
+                                        ax.set_xlabel('Seconds in Bucket')
+                                        ax.set_ylabel('Value')
                                         plt.title(f"Prediction vs. Target for Stock ID {st.session_state['stock_id_display']}")
-
-                                        plt.legend()
-                                        plt.grid(True)
-                                        st.pyplot(plt)
+                                        ax.legend()
+                                        
+                                        # Enabling grid for better readability
+                                        ax.grid(True)
+                                        # Tight layout for neatness
+                                        plt.tight_layout()
+                                        # Display the plot in Streamlit or any other preferred frontend
+                                        st.pyplot(fig)
                                 else:
                                     st.warning("'prediction' or 'target' columns are missing in the data.")
                     else:
@@ -284,7 +291,7 @@ if __name__ == "__main__":
             value="1"
         )
 
-        st.markdown(f"Selected Date for plotting")
+        st.markdown(f"Selected date for plotting")
         chart_date_input = st.text_input("", get_date_from_date_id(int(chart_date_id), holidays=st.session_state['holiday_dates_2023']), key="chart_date", disabled=True, label_visibility="collapsed")
 
         # Convert input values to integers and handle errors
@@ -328,16 +335,31 @@ if __name__ == "__main__":
 
                     df_filtered['meaningful_timestamp'] = meaningful_timestamps
                     
-                    col1, col2, col3 = st.columns([1, 3, 1])  # Create columns to control layout
-                    with col2:  # Place plot in the middle column
+                    col1, col2, col3 = st.columns([2, 2, 1])  # Create columns to control layout
+                    with col1:  # Place plot in the middle column                        
                         # Plot the filtered data with returns
-                        plt.figure(figsize=(6, 3))
-                        plt.plot(df_filtered['meaningful_timestamp'], df_filtered['target'], label='Target', marker='x')
-                        plt.xlabel('Timestamp')
-                        plt.ylabel('Target (Basis Points)')
+                        fig, ax = plt.subplots(figsize=(6, 3))
+
+                        # Plotting the target values
+                        ax.plot(df_filtered['meaningful_timestamp'], df_filtered['target'], linestyle='-', color='royalblue', marker=None)
+
+                        # Setting labels and title
+                        ax.set_xlabel('Timestamp')
+                        ax.set_ylabel('Target (Basis Points)')
                         date_str = df_filtered['meaningful_timestamp'].iloc[0].strftime('%Y-%m-%d')
-                        plt.title(f'Target vs. Timestamp for Stock ID {stock_id} on {date_str}')
-                        plt.legend()
-                        plt.grid(True)
+                        ax.set_title(f'Target vs. Timestamp for Stock ID {stock_id} on {date_str}')
+
+                        # Formatting the x-axis to only show time in HH:MM:SS format
+                        ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+                        ax.xaxis.set_major_locator(mdates.MinuteLocator(interval=1))  # Adjust depending on data density
+
+                        # Adding grid, legend, and adjusting tick rotation for better readability
+                        ax.grid(True)
+                        ax.legend()
                         plt.xticks(rotation=45)
-                        st.pyplot(plt)
+
+                        # Ensuring a tight layout so everything fits without clipping
+                        plt.tight_layout()
+
+                        # Displaying the plot in Streamlit
+                        st.pyplot(fig)

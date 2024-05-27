@@ -1,5 +1,9 @@
 import boto3
 import json
+import pandas as pd 
+import argparse
+from loguru import logger 
+
 
 def send_data_to_kinesis(stream_name, data, partition_key):
     kinesis_client = boto3.client('kinesis')
@@ -9,84 +13,44 @@ def send_data_to_kinesis(stream_name, data, partition_key):
             Data=json.dumps(data),  # Assuming data is a dictionary that can be serialized to JSON
             PartitionKey=str(partition_key)  # A key used to distribute records across shards
         )
-        print('Record sent to Kinesis:', response)
+        logger.info('Record sent to Kinesis:', response)
     except Exception as e:
-        print('Error sending record to Kinesis:', e)
+        logger.info('Error sending record to Kinesis:', e)
 
-# Example usage
-stream_name = 'optiver-stream'
+def create_batches(data, batch_size):
+    data_len = data.shape[0]
 
-stream_data = [{
-    "data" : [{
-            "stock_id": 0,
-            "date_id": 400,
-            "seconds_in_bucket": 0,
-            "imbalance_size": 13964576.49,
-            "imbalance_buy_sell_flag": 1,
-            "reference_price": 0.999454,
-            "matched_size": 10020705.2,
-            "far_price": None,
-            "near_price": None,
-            "bid_price": 0.999648,
-            "bid_size": 10312.0,
-            "ask_price": 1.000521,
-            "ask_size": 15275.08,
-            "wap": 1.0,
-            "target": 0.0500679,
-            "time_id": 22000,
-            "row_id": "400_0_0",
-            "train_type": "test1"
-        },
-        {
-            "stock_id": 1,
-            "date_id": 400,
-            "seconds_in_bucket": 0,
-            "imbalance_size": 2003321.99,
-            "imbalance_buy_sell_flag": 1,
-            "reference_price": 0.998651,
-            "matched_size": 1539364.28,
-            "far_price": None,
-            "near_price": None,
-            "bid_price": 0.998065,
-            "bid_size": 25527.0,
-            "ask_price": 1.00258,
-            "ask_size": 34190.0,
-            "wap": 1.0,
-            "target": -10.010004,
-            "time_id": 22000,
-            "row_id": "400_0_1",
-            "train_type": "test1"
-        },
-        {
-            "stock_id": 2,
-            "date_id": 400,
-            "seconds_in_bucket": 0,
-            "imbalance_size": 1918830.43,
-            "imbalance_buy_sell_flag": -1,
-            "reference_price": 1.00047,
-            "matched_size": 5088261.76,
-            "far_price": None,
-            "near_price": None,
-            "bid_price": 0.999974,
-            "bid_size": 3771.45,
-            "ask_price": 1.001236,
-            "ask_size": 179925.3,
-            "wap": 1.0,
-            "target": 7.070303,
-            "time_id": 22000,
-            "row_id": "400_0_2",
-            "train_type": "test1"
-        }],
-    "commit" : True
-}] 
+    for ind in range(0, data_len, batch_size):
+        start_index = ind 
+        end_index = min(data_len, start_index + batch_size)
 
-while True:
-    for d in stream_data:
-        send_data_to_kinesis(stream_name, d, 1)
+        batch = data.iloc[start_index : end_index]
+        batch = batch.to_dict(orient='records')
+        yield batch 
 
-# for index in range(10):
-#     data = {
-#         'partition_key': 1,
-#         'message': f'Hello, this is a test message {index}!'
-#     }
-#     send_data_to_kinesis(stream_name, data)
+if __name__=="__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--stream-name", type=str, default='optiver-stream', help='Name of Kinesis stream in the console')
+    parser.add_argument("--data-tag", type=str, default='demo_27', help='Train type tag of the data to be ingested')
+    parser.add_argument("--data-path", type=str, default='data/stream_data.json', help='path to streaming data')
+    parser.add_argument("--batch-size", type=int, default=50, help='batch size of the streaming data')
+
+    args = parser.parse_args()
+    logger.info(f"Stream Name : {args.stream_name} -- Data Tag : {args.data_tag} -- Batch Size : {args.batch_size}")
+
+    data = pd.read_json(args.data_path)
+    data['train_type'] = [args.data_tag] * len(data)
+
+    for idx, batch in enumerate(create_batches(data, batch_size=args.batch_size)):
+        logger.info(f"Batch ID : {idx+1}")
+        stream_data = {
+            "data"  : batch, 
+            "commit" : True 
+        }
+
+        send_data_to_kinesis(args.stream_name, stream_data, 1)
+
+        if idx == 10:
+            break
+
+

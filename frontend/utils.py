@@ -65,4 +65,4 @@ def convert_to_meaningful_time(row_id, holidays=[]):
     date_id = int(row_id.split('_')[0])
     base_time = get_date_from_date_id(date_id, holidays=holidays)
     ts = int(row_id.split('_')[1])
-    return base_time + pd.Timedelta(seconds=ts)
+    return base_time + pd.to_timedelta('15:51:00') + pd.Timedelta(seconds=ts)

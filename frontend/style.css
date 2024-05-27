@@ -1,0 +1,22 @@
+body {
+    background: url('images/app_frontend.jpg') no-repeat center center fixed;
+    background-size: cover;
+}
+
+.main .block-container {
+    max-width: 80%;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+[data-testid="stHeader"] {
+    background-color: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(10px);
+}
+
+[data-testid="stSidebar"] {
+    background-color: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(10px);
+}
