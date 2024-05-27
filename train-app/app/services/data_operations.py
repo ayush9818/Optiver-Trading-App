@@ -146,8 +146,9 @@ def incremental_training(data_path, base_model_path, artifact_dir, model_name):
     initial_model = pickle.load(open(base_model_path, 'rb'))
 
     df_train = df_train.dropna(subset=['target']).copy()
-    df_train, feature_names = generate_features(df_train)
+    df_train, _  = generate_features(df_train)
 
+    feature_names = df_train.drop(columns=['target', 'date_id', 'stock_id']).columns.tolist()
     X = df_train[feature_names].values
     y = df_train['target'].values
 
