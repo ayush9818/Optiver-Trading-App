@@ -1,0 +1,6 @@
+streamlit
+plotly
+boto3
+python-dotenv
+matplotlib
+holidays
