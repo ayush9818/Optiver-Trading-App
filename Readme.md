@@ -82,4 +82,4 @@ The Data Streaming component is responsible for real-time data ingestion using A
 - Ayush Agarwal
 - Kevin Li
 - Kexian Wu
-- Mark 
+- Mark Li
