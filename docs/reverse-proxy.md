@@ -1,28 +1,3 @@
-
-
-To Create DB Schema
-```bash
-python src/schema.py --create-schema
-```
-
-To Run initial Data Ingestion
-```bash
-- nohup python app/ingest_data.py \
-               --data-path data/optiver_train.csv \
-               --batch-size 5000 \
-               --commit > logs/ingestion_logs.log 2>&1 &
-```
-
-To Build Optiver DB APP 
-```bash
-docker build -f dockerfiles/Dockerfile.app -t optiver-db-app .
-```
-
-To run the Optiver DB APP 
-```bash
-docker run -d --env-file $(pwd)/.env -p 80:8000 optiver-db-app
-```
-
 ## SETTING UP REVERSE PROXY USING NGINX
 
 Install Nginx

@@ -12,6 +12,7 @@ IMAGE_TAG=$2
 
 # Define your AWS ECR repository URI
 AWS_ECR_REPO_URI="058264109996.dkr.ecr.us-east-1.amazonaws.com"
+ECR_REPO_NAME="optiver-db-app"
 
 # Authenticate Docker to your Amazon ECR registry
 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $AWS_ECR_REPO_URI
@@ -20,7 +21,7 @@ aws ecr get-login-password --region us-east-1 | docker login --username AWS --pa
 docker build -f dockerfiles/Dockerfile.app -t $IMAGE_NAME .
 
 # Tag the Docker image
-docker tag $IMAGE_NAME:latest $AWS_ECR_REPO_URI/optiver-db-app:$IMAGE_TAG
+docker tag $IMAGE_NAME:latest $AWS_ECR_REPO_URI/$ECR_REPO_NAME:$IMAGE_TAG
 
 # Push the Docker image to the AWS ECR repository
-docker push $AWS_ECR_REPO_URI/optiver-db-app:$IMAGE_TAG
+docker push $AWS_ECR_REPO_URI/$ECR_REPO_NAME:$IMAGE_TAG
