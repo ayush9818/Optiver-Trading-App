@@ -7,16 +7,17 @@ from app.utils import apply_filters
 import logging
 
 # Configure logger
-logger = logging.getLogger('optiver.' + __name__)
+logger = logging.getLogger("optiver." + __name__)
 
 router = APIRouter()
+
 
 @router.get("/date_mappings/", response_model=PageDateRequest)
 def get_date_mappings(
     query_params: DateMappingQueryParams = Depends(),
     db: Session = Depends(get_db),
     page: int = Query(1, description="Page number"),
-    page_size: int = Query(10, description="Number of results per page")
+    page_size: int = Query(10, description="Number of results per page"),
 ):
     """
     Retrieve a paginated list of date mappings based on the provided query parameters.
@@ -58,18 +59,22 @@ def get_date_mappings(
         # Raise an HTTPException if no results are found
         if not results:
             logger.warning("No date mappings found matching the criteria.")
-            raise HTTPException(status_code=404, detail="No date mappings found matching the criteria.")
+            raise HTTPException(
+                status_code=404, detail="No date mappings found matching the criteria."
+            )
 
         # Calculate the total number of pages
         total_pages = (total_results + page_size - 1) // page_size
 
-        logger.info(f"Retrieved {len(results)} date mappings, page {page} of {total_pages}.")
+        logger.info(
+            f"Retrieved {len(results)} date mappings, page {page} of {total_pages}."
+        )
         return {
             "total_results": total_results,
             "total_pages": total_pages,
             "page": page,
             "page_size": page_size,
-            "data": results
+            "data": results,
         }
     except Exception as e:
         logger.error(f"Error retrieving date mappings: {e}")

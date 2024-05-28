@@ -1,14 +1,15 @@
-import requests 
+import requests
 import json
+
 
 class APIHandler:
     def __init__(self, base_url, page_size=50):
-        self.base_url = base_url 
+        self.base_url = base_url
         self.page_size = page_size
 
     def get(self, api_url, params):
-        params['page_size'] = self.page_size
-        url = self.base_url + api_url 
+        params["page_size"] = self.page_size
+        url = self.base_url + api_url
         print(f"API URL : {url}")
         all_data = []
         page = 1
@@ -24,13 +25,11 @@ class APIHandler:
         return all_data
 
     def post(self, api_url, data):
-        url = self.base_url + api_url 
+        url = self.base_url + api_url
         # Convert the dictionary to JSON format
         json_data = json.dumps(data)
         # Set the appropriate headers for your request
-        headers = {
-            'Content-Type': 'application/json'
-        }
+        headers = {"Content-Type": "application/json"}
         # Make a POST request to the API endpoint
         response = requests.post(url, data=json_data, headers=headers)
         # Check the response from the server

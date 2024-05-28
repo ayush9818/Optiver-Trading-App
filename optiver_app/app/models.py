@@ -4,6 +4,7 @@ from typing import List, Optional, Any
 
 # Pydantic models for data validation and API interaction
 
+
 class StockDataRequest(BaseModel):
     """
     Request model for Stock Data.
@@ -28,6 +29,7 @@ class StockDataRequest(BaseModel):
         row_id (str): Row identifier.
         train_type (str): Type of training.
     """
+
     stock_id: int
     date_id: int
     seconds_in_bucket: int
@@ -47,6 +49,7 @@ class StockDataRequest(BaseModel):
     row_id: str
     train_type: str
 
+
 class DateMappingRequest(BaseModel):
     """
     Request model for Date Mapping.
@@ -55,11 +58,13 @@ class DateMappingRequest(BaseModel):
         date_id (int): Identifier for the date.
         date (dtdate): The actual date.
     """
+
     date_id: int
     date: dtdate
 
     class Config:
         orm_mode = True
+
 
 class PageRequest(BaseModel):
     """
@@ -72,11 +77,13 @@ class PageRequest(BaseModel):
         page_size (int): Number of results per page.
         data (List[StockDataRequest]): List of stock data requests.
     """
+
     total_results: int
     total_pages: int
     page: int
     page_size: int
     data: List[StockDataRequest]
+
 
 class PageDateRequest(BaseModel):
     """
@@ -89,11 +96,13 @@ class PageDateRequest(BaseModel):
         page_size (int): Number of results per page.
         data (List[DateMappingRequest]): List of date mapping requests.
     """
+
     total_results: int
     total_pages: int
     page: int
     page_size: int
     data: List[DateMappingRequest]
+
 
 class IngestRequest(BaseModel):
     """
@@ -103,8 +112,10 @@ class IngestRequest(BaseModel):
         commit (bool): Flag to indicate if data should be committed to the database.
         data (List[StockDataRequest]): List of stock data requests to ingest.
     """
+
     commit: bool
     data: List[StockDataRequest]
+
 
 class DateMappingQueryParams(BaseModel):
     """
@@ -114,8 +125,10 @@ class DateMappingQueryParams(BaseModel):
         date_id (Optional[int]): Filter by Date ID.
         date (Optional[dtdate]): Filter by Date.
     """
+
     date_id: Optional[int] = Field(default=None, description="Filter by Date ID")
     date: Optional[dtdate] = Field(default=None, description="Filter by Date")
+
 
 class StockDataQueryParams(BaseModel):
     """
@@ -126,9 +139,11 @@ class StockDataQueryParams(BaseModel):
         end_date_id (Optional[int]): End of the date ID range.
         date_id (Optional[int]): Specific date ID.
     """
+
     start_date_id: Optional[int] = Field(None, description="Start of the date ID range")
     end_date_id: Optional[int] = Field(None, description="End of the date ID range")
     date_id: Optional[int] = Field(None, description="Date ID")
+
 
 class ModelCreate(BaseModel):
     """
@@ -139,9 +154,11 @@ class ModelCreate(BaseModel):
         model_artifact_path (str): Path to the model artifact.
         date_id (int): Identifier for the date.
     """
+
     model_name: str
     model_artifact_path: str
     date_id: int
+
 
 class ModelDisplay(BaseModel):
     """
@@ -153,6 +170,7 @@ class ModelDisplay(BaseModel):
         model_artifact_path (str): Path to the model artifact.
         date_id (int): Identifier for the date.
     """
+
     model_id: int
     model_name: str
     model_artifact_path: str
@@ -160,6 +178,7 @@ class ModelDisplay(BaseModel):
 
     class Config:
         orm_mode = True
+
 
 class PageModelRequest(BaseModel):
     """
@@ -172,11 +191,13 @@ class PageModelRequest(BaseModel):
         page_size (int): Number of results per page.
         data (List[ModelDisplay]): List of model displays.
     """
+
     total_results: int
     total_pages: int
     page: int
     page_size: int
     data: List[ModelDisplay]
+
 
 class ModelInferenceBase(BaseModel):
     """
@@ -187,15 +208,19 @@ class ModelInferenceBase(BaseModel):
         date_id (int): Identifier for the date.
         predictions (str): Predictions made by the model.
     """
+
     model_id: int
     date_id: int
     predictions: str
+
 
 class ModelInferenceCreate(ModelInferenceBase):
     """
     Request model for creating Model Inference.
     """
+
     pass
+
 
 class ModelInferenceRead(ModelInferenceBase):
     """
@@ -204,10 +229,12 @@ class ModelInferenceRead(ModelInferenceBase):
     Attributes:
         id (int): Unique identifier for the inference.
     """
+
     id: int
 
     class Config:
         orm_mode = True
+
 
 class PageModelInference(BaseModel):
     """
@@ -220,6 +247,7 @@ class PageModelInference(BaseModel):
         page_size (int): Number of results per page.
         data (List[ModelInferenceRead]): List of model inference reads.
     """
+
     total_results: int
     total_pages: int
     page: int

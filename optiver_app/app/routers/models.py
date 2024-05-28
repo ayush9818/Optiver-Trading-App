@@ -8,9 +8,10 @@ from typing import Optional
 import logging
 
 # Configure logger
-logger = logging.getLogger('optiver.' + __name__)
+logger = logging.getLogger("optiver." + __name__)
 
 router = APIRouter()
+
 
 @router.post("/models/")
 async def create_model(model: ModelCreate, db: Session = Depends(get_db)):
@@ -29,13 +30,19 @@ async def create_model(model: ModelCreate, db: Session = Depends(get_db)):
     """
     logger.info("Attempting to create a new model.")
     # Check if a model with the same name already exists
-    existing_model = db.query(Model).filter(Model.model_name == model.model_name).first()
+    existing_model = (
+        db.query(Model).filter(Model.model_name == model.model_name).first()
+    )
     if existing_model:
         logger.warning(f"Model with name {model.model_name} already exists.")
         raise HTTPException(status_code=400, detail="Model already exists")
-    
+
     # Create a new Model instance
-    new_model = Model(model_name=model.model_name, model_artifact_path=model.model_artifact_path, date_id=model.date_id)
+    new_model = Model(
+        model_name=model.model_name,
+        model_artifact_path=model.model_artifact_path,
+        date_id=model.date_id,
+    )
     db.add(new_model)
     try:
         # Commit the transaction to save the record in the database
@@ -45,11 +52,14 @@ async def create_model(model: ModelCreate, db: Session = Depends(get_db)):
         # Rollback the transaction in case of an integrity error
         db.rollback()
         logger.error(f"Integrity error creating model {model.model_name}.")
-        raise HTTPException(status_code=400, detail="Model with this name already exists")
-    
+        raise HTTPException(
+            status_code=400, detail="Model with this name already exists"
+        )
+
     # Refresh the instance to get the generated ID and other fields
     db.refresh(new_model)
     return {"message": "Model Created successfully."}
+
 
 @router.get("/models/", response_model=PageModelRequest)
 def read_model(
@@ -57,7 +67,7 @@ def read_model(
     model_name: Optional[str] = Query(None, description="Model Name"),
     page: int = Query(1, description="Page number"),
     page_size: int = Query(10, description="Number of results per page"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Retrieve a paginated list of models based on optional filtering criteria.
@@ -109,5 +119,5 @@ def read_model(
         "total_pages": total_pages,
         "page": page,
         "page_size": page_size,
-        "data": results
+        "data": results,
     }

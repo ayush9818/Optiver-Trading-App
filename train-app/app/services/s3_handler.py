@@ -4,7 +4,8 @@ from botocore.exceptions import ClientError
 import logging
 
 # Configure logger
-logger = logging.getLogger('optiver.' + __name__)
+logger = logging.getLogger("optiver." + __name__)
+
 
 class S3Handler:
     """
@@ -19,15 +20,15 @@ class S3Handler:
         """
         Initialize the S3Handler with AWS credentials and S3 bucket information.
         """
-        self.bucket_name = os.environ['S3_BUCKET_NAME']
-        access_key_id = os.environ['AWS_ACCESS_KEY_ID']
-        secret_access_key = os.environ['AWS_SECRET_ACCESS_KEY']
-        region = os.environ['REGION']
+        self.bucket_name = os.environ["S3_BUCKET_NAME"]
+        access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
+        secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
+        region = os.environ["REGION"]
         self.s3_client = boto3.client(
-            's3', 
-            aws_access_key_id=access_key_id, 
+            "s3",
+            aws_access_key_id=access_key_id,
             aws_secret_access_key=secret_access_key,
-            region_name=region
+            region_name=region,
         )
 
     def download_file(self, s3_path, local_dir):

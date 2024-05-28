@@ -3,7 +3,8 @@ import json
 import logging
 
 # Configure logger
-logger = logging.getLogger('optiver.' + __name__)
+logger = logging.getLogger("optiver." + __name__)
+
 
 class APIHandler:
     """
@@ -39,7 +40,7 @@ class APIHandler:
         Raises:
             requests.exceptions.HTTPError: If an HTTP error occurs during the request.
         """
-        params['page_size'] = self.page_size
+        params["page_size"] = self.page_size
         url = self.base_url + api_url
         logger.info(f"API URL : {url}")
         all_data = []
@@ -72,10 +73,12 @@ class APIHandler:
         """
         url = self.base_url + api_url
         json_data = json.dumps(data)
-        headers = {'Content-Type': 'application/json'}
+        headers = {"Content-Type": "application/json"}
         response = requests.post(url, data=json_data, headers=headers)
         if response.ok:
             logger.info("Success")
         else:
-            logger.error(f"Failed to ingest data: {response.status_code} - {response.text}")
+            logger.error(
+                f"Failed to ingest data: {response.status_code} - {response.text}"
+            )
             raise Exception("Failed to ingest data")

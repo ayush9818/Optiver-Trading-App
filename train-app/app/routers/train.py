@@ -4,9 +4,10 @@ from app.services.data_operations import train_model
 import logging
 
 # Configure logger
-logger = logging.getLogger('optiver.' + __name__)
+logger = logging.getLogger("optiver." + __name__)
 
 router = APIRouter()
+
 
 @router.post("/train-model/")
 async def train(request: TrainRequest, background_tasks: BackgroundTasks):
@@ -27,7 +28,9 @@ async def train(request: TrainRequest, background_tasks: BackgroundTasks):
         logger.info(f"Starting training for model {request.model_name}.")
         # Add the training task to be run in the background
         background_tasks.add_task(train_model, request)
-        logger.info(f"Training task added to background tasks for model {request.model_name}.")
+        logger.info(
+            f"Training task added to background tasks for model {request.model_name}."
+        )
         return {"message": f"Training started for model {request.model_name}"}
     except Exception as e:
         logger.error(f"Error starting training for model {request.model_name}: {e}")

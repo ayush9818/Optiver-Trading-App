@@ -1,4 +1,5 @@
 import warnings
+
 warnings.filterwarnings("ignore")
 
 from sqlalchemy import create_engine
@@ -9,7 +10,7 @@ from app.utils import get_secret
 import logging
 
 # Configure logger
-logger = logging.getLogger('optiver.' + __name__)
+logger = logging.getLogger("optiver." + __name__)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -20,9 +21,9 @@ logger.info("Retrieving database secrets.")
 secrets = get_secret()
 
 # Database connection details
-hostname = env.get('DB_HOST')
-dbname = env.get('DB_NAME')
-port = env.get('DB_PORT')
+hostname = env.get("DB_HOST")
+dbname = env.get("DB_NAME")
+port = env.get("DB_PORT")
 
 # Construct the database URL
 DATABASE_URL = f"postgresql://{secrets['username']}:{secrets['password']}@{hostname}:{port}/{dbname}"
@@ -35,6 +36,7 @@ logger.info("SQLAlchemy engine created.")
 # Create a configured "Session" class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 logger.info("SQLAlchemy sessionmaker configured.")
+
 
 def get_db():
     """
